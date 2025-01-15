@@ -21,9 +21,6 @@ public class ScholarTree {
 	}
 
 	public CengPaper searchPaper(Integer paperId) {
-		// TODO: Implement this method
-		// find the paper with the searched paperId in primary B+ tree
-		// return value will not be tested, just print according to the specifications
 		ScholarNode currentNode = primaryRoot;
 		System.out.println("search1|" + paperId);
 		String indent = "";
@@ -45,16 +42,16 @@ public class ScholarTree {
 				indent += "\t";
 			} else {
 				ScholarNodePrimaryLeaf leafNode = (ScholarNodePrimaryLeaf) currentNode;
-				System.out.println(indent + "<data>");
 				CengPaper foundPaper = null;
 				for (int i = 0; i < leafNode.paperCount(); i++) {
 					if (leafNode.paperIdAtIndex(i).equals(paperId)) {
 						foundPaper = leafNode.paperAtIndex(i);
+						System.out.println(indent + "<data>");
 						System.out.println(indent + "<record>" + foundPaper.fullName() + "</record>");
+						System.out.println(indent + "</data>");
 						break;
 					}
 				}
-				System.out.println(indent + "</data>");
 
 				if (foundPaper == null) {
 					System.out.println("Could not find " + paperId);
@@ -62,12 +59,11 @@ public class ScholarTree {
 				return foundPaper;
 			}
 		}
+		System.out.println("Could not find " + paperId);
 		return null;
 	}
 
 	public void searchJournal(String journal) {
-		// TODO: Implement this method
-		// find the journal with the searched journal in secondary B+ tree
 		ScholarNode currentNode = secondaryRoot;
 		System.out.println("search2|" + journal);
 		String indent = "";
@@ -83,29 +79,28 @@ public class ScholarTree {
 
 				int idx = 0;
 				while (idx < indexNode.journalCount() &&
-						journal.compareTo(indexNode.journalAtIndex(idx)) > 0) {
+						journal.compareTo(indexNode.journalAtIndex(idx)) >= 0) {
 					idx++;
 				}
 				currentNode = indexNode.getChildrenAt(idx);
 				indent += "\t";
 			} else {
 				ScholarNodeSecondaryLeaf leafNode = (ScholarNodeSecondaryLeaf) currentNode;
-				System.out.println(indent + "<data>");
 				boolean found = false;
 
 				for (int i = 0; i < leafNode.journalCount(); i++) {
 					if (leafNode.journalAtIndex(i).equals(journal)) {
 						ArrayList<Integer> paperIds = leafNode.papersAtIndex(i);
 						if (paperIds != null && !paperIds.isEmpty()) {
-							// Print journal name
+							System.out.println(indent + "<data>");
 							System.out.println(indent + journal);
-							// Print records
 							for (Integer paperId : paperIds) {
 								CengPaper paper = searchPFJ(paperId);
 								if (paper != null) {
 									System.out.println(indent + "\t<record>" + paper.fullName() + "</record>");
 								}
 							}
+							System.out.println(indent + "</data>");
 							found = true;
 						}
 						break;
@@ -113,10 +108,8 @@ public class ScholarTree {
 				}
 
 				if (!found) {
-					System.out.println(indent + "Could not find " + journal);
+					System.out.println("Could not find " + journal);
 				}
-
-				System.out.println(indent + "</data>");
 				break;
 			}
 		}
@@ -275,11 +268,11 @@ public class ScholarTree {
 		parent.addChild(position + 1, child);
 
 		if (parent.paperIdCount() > 2 * ScholarNode.order) {
-			splitPrimaryIndex(parent);
+			splitP(parent);
 		}
 	}
 
-	private void splitPrimaryIndex(ScholarNodePrimaryIndex node) {
+	private void splitP(ScholarNodePrimaryIndex node) {
 		int midpoint = ScholarNode.order;
 		Integer midKey = node.paperIdAtIndex(midpoint);
 
@@ -319,7 +312,7 @@ public class ScholarTree {
 			newNode.setParent(parent);
 
 			if (parent.paperIdCount() > 2 * ScholarNode.order) {
-				splitPrimaryIndex(parent);
+				splitP(parent);
 			}
 		}
 	}
@@ -462,12 +455,12 @@ public class ScholarTree {
 			parent.addChild(position + 1, newLeaf);
 
 			if (parent.journalCount() > 2 * ScholarNode.order) {
-				splitSecondaryIndex(parent);
+				splitS(parent);
 			}
 		}
 	}
 
-	private void splitSecondaryIndex(ScholarNodeSecondaryIndex node) {
+	private void splitS(ScholarNodeSecondaryIndex node) {
 		int midpoint = ScholarNode.order;
 		String midJournal = node.journalAtIndex(midpoint);
 
@@ -507,7 +500,7 @@ public class ScholarTree {
 			newNode.setParent(parent);
 
 			if (parent.journalCount() > 2 * ScholarNode.order) {
-				splitSecondaryIndex(parent);
+				splitS(parent);
 			}
 		}
 	}
